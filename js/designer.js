@@ -475,13 +475,15 @@ com.logicpartners.labelDesigner = function (canvasid, labelWidth, labelHeight) {
 
 	this.generateZPL = function () {
 		var data = "^XA\r\n" +
-			"^CFd0,10,18\r\n" +
+			"^CI28\r\n" +
+			"^CFN,50\r\n" +
 			"^PR12\r\n" +
 			"^LRY\r\n" +
 			"^MD30\r\n" +
 			"^PW" + this.labelWidth + "\r\n" +
 			"^LL" + this.labelHeight + "\r\n" +
 			"^PON\r\n";
+
 		var bufferData = "";
 
 		for (var i = 0; i < this.currentLayer; i++) {
