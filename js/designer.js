@@ -2,9 +2,9 @@ if (!com)
 	var com = {};
 if (!com.logicpartners)
 	com.logicpartners = {};
-	
+
 // http://stackoverflow.com/a/5932203/697477
-HTMLCanvasElement.prototype.RelativeMouse = function(event) {
+HTMLCanvasElement.prototype.RelativeMouse = function (event) {
 	var totalOffsetX = 0;
 	var totalOffsetY = 0;
 	var canvasX = 0;
@@ -20,13 +20,13 @@ HTMLCanvasElement.prototype.RelativeMouse = function(event) {
 	canvasX = event.clientX - totalOffsetX;
 	canvasY = event.clientY - totalOffsetY;
 
-	return {x: canvasX, y: canvasY}
+	return { x: canvasX, y: canvasY }
 }
 
 // From http://stackoverflow.com/a/4577326/697477
 var CP = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
 if (CP && CP.lineTo) {
-	CP.dashedLine = function(x, y, x2, y2, dashArray) {
+	CP.dashedLine = function (x, y, x2, y2, dashArray) {
 		if (!dashArray)
 			dashArray = [10, 5];
 		if (dashLength == 0)
@@ -55,7 +55,7 @@ if (CP && CP.lineTo) {
 		this.moveTo(0, 0);
 	}
 
-	CP.dashedStroke = function(x, y, x2, y2, dashArray) {
+	CP.dashedStroke = function (x, y, x2, y2, dashArray) {
 		this.beginPath();
 		this.dashedLine(x, y, x2, y, dashArray);
 		this.dashedLine(x2, y, x2, y2, dashArray);
@@ -65,7 +65,7 @@ if (CP && CP.lineTo) {
 	}
 }
 
-com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
+com.logicpartners.labelDesigner = function (canvasid, labelWidth, labelHeight) {
 	this.canvas = document.getElementById(canvasid);
 	this.canvasElement = $(this.canvas);
 
@@ -81,21 +81,21 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 	this.currentLayer = 0;
 	this.activeElement = null;
 	this.activeTool = null;
-	
+
 	this.labelX = this.canvas.width / 2 - this.labelWidth / 2;
 	this.labelY = 5;
 
 	this.newObject = null;
-	this.dragStartPosition = {x: 0, y: 0};
+	this.dragStartPosition = { x: 0, y: 0 };
 	this.dragStartTime = 0;
-	this.dragLastPosition = {x: 0, y: 0};
-	this.dragElementOffset = {x: 0, y: 0};
+	this.dragLastPosition = { x: 0, y: 0 };
+	this.dragElementOffset = { x: 0, y: 0 };
 	this.dragAction = 0;
 	this.dragging = false;
 
 	var self = this;
-	
-	this.updateLabelSize = function(width, height) {
+
+	this.updateLabelSize = function (width, height) {
 		var xchange = (width * this.dpi + 10) - parseInt(this.canvasElement.prop("width"));
 		this.labelWidth = width * this.dpi;
 		this.labelHeight = height * this.dpi;
@@ -108,152 +108,153 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		this.updateCanvas();
 	}
 
-	this.canvasElement.on("click", function() {
+	this.canvasElement.on("click", function () {
 		self.setActiveElement();
 	})
-			.on("mousedown", function() {
-				self.dragStartPosition = self.canvas.RelativeMouse(event);
-				self.dragLastPosition = self.dragStartPosition;
-				
-				if (self.newObject) {
-					// Create new object.
-					self.elements[self.currentLayer++] = new self.newObject(self.dragStartPosition.x, self.dragStartPosition.y, 1, 1);
-					self.dragAction = 8;
-					self.activeElement = self.elements[self.currentLayer - 1];
-					self.newObjectController.button.removeClass("designerToolbarButtonActive");
-					self.newObject = null;
-					self.newObjectController = null;
+		.on("mousedown", function () {
+			self.dragStartPosition = self.canvas.RelativeMouse(event);
+			self.dragLastPosition = self.dragStartPosition;
+
+			if (self.newObject) {
+				// Create new object.
+				self.elements[self.currentLayer++] = new self.newObject(self.dragStartPosition.x, self.dragStartPosition.y, 1, 1);
+				self.dragAction = 8;
+				self.activeElement = self.elements[self.currentLayer - 1];
+				self.newObjectController.button.removeClass("designerToolbarButtonActive");
+				self.newObject = null;
+				self.newObjectController = null;
+			}
+			else {
+				self.dragAction = 0;
+
+				self.setActiveElement();
+
+				if (self.activeElement) {
+					self.dragElementOffset = {
+						x: self.activeElement.x - self.dragStartPosition.x,
+						y: self.activeElement.y - self.dragStartPosition.y
+					};
+
+					self.setActiveHandle(self.dragStartPosition);
 				}
-				else {
-					self.dragAction = 0;
+			}
+			self.dragging = true;
+		})
+		.on("mouseup", function () {
+			self.dragging = false;
+		})
+		.on("mouseout", function () {
+			self.dragging = false;
+		})
+		.on("mousemove", function () {
+			if (self.dragging && self.activeElement) {
+				var coords = self.canvas.RelativeMouse(event);
+				//console.log(self.dragAction);
+				switch (self.dragAction) {
+					case 0:
+						self.move(coords.x + self.dragElementOffset.x, coords.y + self.dragElementOffset.y);
+						break;
+					default:
+						self.resize(coords.x - self.dragLastPosition.x, coords.y - self.dragLastPosition.y, self.dragAction);
+						break;
+				}
+				self.updateCanvas();
+				self.dragLastPosition = coords;
+			}
+			else if (self.newObject != null) {
+				self.canvasElement.css({ cursor: "crosshair" });
+			}
+			else if (self.activeElement) {
+				var coords = self.canvas.RelativeMouse(event);
+				// If cursor is within range of edge, show resize handles
+				var location = self.getHandle(coords);
+				var style = "default";
+				switch (location) {
+					case 0:
+						style = "default";
+						break;
+					case 1:
+						style = "nw-resize";
+						break;
+					case 2:
+						style = "n-resize";
+						break;
+					case 3:
+						style = "ne-resize";
+						break;
+					case 4:
+						style = "w-resize";
+						break;
+					case 5:
+						style = "e-resize";
+						break;
+					case 6:
+						style = "sw-resize";
+						break;
+					case 7:
+						style = "s-resize";
+						break;
+					case 8:
+						style = "se-resize";
+						break;
+				}
+				self.canvasElement.css({ cursor: style });
+			}
+		})
+		.on("keydown", function (event) {
+			event = event || window.event;
 
-					self.setActiveElement();
-
+			var handled = false;
+			switch (event.keyCode) {
+				case 37: // Left arrow
+					if (self.activeElement)
+						self.activeElement.x -= 1;
+					handled = true;
+					break;
+				case 38: // Up arrow
+					if (self.activeElement)
+						self.activeElement.y -= 1;
+					handled = true;
+					break;
+				case 39: // Right arrow
+					if (self.activeElement)
+						self.activeElement.x += 1;
+					handled = true;
+					break;
+				case 40: // Down arrow
+					if (self.activeElement)
+						self.activeElement.y += 1;
+					handled = true;
+					break;
+				case 46: // Delete key
+				case 8:  // Backspace key
 					if (self.activeElement) {
-						self.dragElementOffset = {
-							x: self.activeElement.x - self.dragStartPosition.x,
-							y: self.activeElement.y - self.dragStartPosition.y
-						};
-
-						self.setActiveHandle(self.dragStartPosition);
+						self.deleteActiveElement();
+						handled = true;
 					}
-				}
-				self.dragging = true;
-			})
-			.on("mouseup", function() {
-				self.dragging = false;
-			})
-			.on("mouseout", function() {
-				self.dragging = false;
-			})
-			.on("mousemove", function() {
-				if (self.dragging && self.activeElement) {
-					var coords = self.canvas.RelativeMouse(event);
-					//console.log(self.dragAction);
-					switch (self.dragAction) {
-						case 0:
-							self.move(coords.x + self.dragElementOffset.x, coords.y + self.dragElementOffset.y);
-							break;
-						default:
-							self.resize(coords.x - self.dragLastPosition.x, coords.y - self.dragLastPosition.y, self.dragAction);
-							break;
+					break;
+				case 80:
+					if (event.ctrlKey) {
+						self.generateZPL();
+						handled = true;
 					}
-					self.updateCanvas();
-					self.dragLastPosition = coords;
-				}
-				else if (self.newObject != null) {
-					self.canvasElement.css({ cursor: "crosshair" });
-				}
-				else if (self.activeElement) {
-					var coords = self.canvas.RelativeMouse(event);
-					// If cursor is within range of edge, show resize handles
-					var location = self.getHandle(coords);
-					var style = "default";
-					switch (location) {
-						case 0:
-							style = "default";
-							break;
-						case 1:
-							style = "nw-resize";
-							break;
-						case 2:
-							style = "n-resize";
-							break;
-						case 3:
-							style = "ne-resize";
-							break;
-						case 4:
-							style = "w-resize";
-							break;
-						case 5:
-							style = "e-resize";
-							break;
-						case 6:
-							style = "sw-resize";
-							break;
-						case 7:
-							style = "s-resize";
-							break;
-						case 8:
-							style = "se-resize";
-							break;
-					}
-					self.canvasElement.css({cursor: style});
-				}
-			})
-			.on("keydown", function(event) {
-				event = event || window.event;
+					break;
+			}
 
-				var handled = false;
-				switch (event.keyCode) {
-					case 37: // Left arrow
-						if (self.activeElement)
-							self.activeElement.x -= 1;
-						handled = true;
-						break;
-					case 38: // Up arrow
-						if (self.activeElement)
-							self.activeElement.y -= 1;
-						handled = true;
-						break;
-					case 39: // Right arrow
-						if (self.activeElement)
-							self.activeElement.x += 1;
-						handled = true;
-						break;
-					case 40: // Down arrow
-						if (self.activeElement)
-							self.activeElement.y += 1;
-						handled = true;
-						break;
-					case 46:
-						if (self.activeElement) {
-							self.deleteActiveElement();
-							handled = true;
-						}
-						break;
-					case 80:
-						if (event.ctrlKey) {
-							self.generateZPL();
-							handled = true;
-						}
-						break;
-				}
+			if (handled) {
+				self.updateCanvas();
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		});
 
-				if (handled) {
-					self.updateCanvas();
-					event.preventDefault();
-					event.stopPropagation();
-				}
-			});
-			
-	this.addObject = function(object) {
+	this.addObject = function (object) {
 		this.elements[this.currentLayer++] = object;
 		this.activeElement = this.elements[this.currentLayer - 1];
 		this.updateCanvas();
 	}
-			
-	this.deleteActiveElement = function() {
+
+	this.deleteActiveElement = function () {
 		if (this.activeElement) {
 			for (var i = 0; i < this.currentLayer; i++) {
 				if (this.elements[i] && this.elements[i] == this.activeElement) {
@@ -264,7 +265,7 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		}
 	}
 
-	this.setActiveElement = function() {
+	this.setActiveElement = function () {
 		var coordinates = this.canvas.RelativeMouse(event);
 		if (!this.activeElement || this.getHandle(coordinates) == 0) {
 			this.activeElement = null;
@@ -287,11 +288,11 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 	 *          4 left                   5 right
 	 *          6 bottom left  7 bottom  8 bottom right
 	 */
-	this.setActiveHandle = function(coords) {
+	this.setActiveHandle = function (coords) {
 		this.dragAction = this.getHandle(coords);
 	}
 
-	this.getHandle = function(coords) {
+	this.getHandle = function (coords) {
 		var result = 0;
 
 		var leftEdge = coords.x > this.activeElement.x - 5 && coords.x < this.activeElement.x + 5;
@@ -322,12 +323,12 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		return result;
 	}
 
-	this.move = function(x, y) {
+	this.move = function (x, y) {
 		this.activeElement.x = x;
 		this.activeElement.y = y;
 	}
 
-	this.resize = function(xchange, ychange) {
+	this.resize = function (xchange, ychange) {
 		switch (this.dragAction) {
 			case 1: // Top Left
 				this.activeElement.x += xchange;
@@ -388,7 +389,7 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		}
 	}
 
-	this.swapActionVertical = function() {
+	this.swapActionVertical = function () {
 		switch (this.dragAction) {
 			case 1:
 				this.dragAction = 6;
@@ -411,7 +412,7 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		}
 	}
 
-	this.swapActionHorizontal = function() {
+	this.swapActionHorizontal = function () {
 		switch (this.dragAction) {
 			case 1:
 				this.dragAction = 3;
@@ -434,18 +435,18 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		}
 	}
 
-	this.update = function() {
+	this.update = function () {
 		this.propertyInspector.update(this.activeElement);
 	}
 
-	this.updateCanvas = function() {
+	this.updateCanvas = function () {
 		this.update();
-		
+
 		//this.drawingContext.globalCompositeOperation = "source-over";
 
 		this.drawingContext.fillStyle = "#FFFFFF";
 		this.drawingContext.fillRect(0, 0, this.canvas.width, this.canvas.height);
-		
+
 		//this.drawingContext.fillStyle = "rgba(255, 255, 255, 0)";
 		//this.drawingContext.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -456,7 +457,7 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 
 		this.drawingContext.strokeStyle = "#000000";
 		this.drawingContext.fillStyle = "#000000";
-		
+
 		//this.drawingContext.globalCompositeOperation = "difference";
 
 		for (var i = 0; i < this.currentLayer; i++) {
@@ -471,33 +472,33 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		if (this.activeElement)
 			this.activeElement.drawActive(this.drawingContext);
 	}
-	
-	this.generateZPL = function() {
+
+	this.generateZPL = function () {
 		var data = "^XA\r\n" +
-				   "^CFd0,10,18\r\n" +
-				   "^PR12\r\n" +
-				   "^LRY\r\n" +
-				   "^MD30\r\n" +
-				   "^PW" + this.labelWidth + "\r\n" +
-				   "^LL" + this.labelHeight + "\r\n" +
-				   "^PON\r\n";
-	    var bufferData = "";
-		
+			"^CFd0,10,18\r\n" +
+			"^PR12\r\n" +
+			"^LRY\r\n" +
+			"^MD30\r\n" +
+			"^PW" + this.labelWidth + "\r\n" +
+			"^LL" + this.labelHeight + "\r\n" +
+			"^PON\r\n";
+		var bufferData = "";
+
 		for (var i = 0; i < this.currentLayer; i++) {
 			if (this.elements[i]) {
 				bufferData += this.elements[i].getZPLData();
 				data += this.elements[i].toZPL(this.labelX, this.labelY, this.labelHeight, this.labelWidth);
 			}
 		}
-		
+
 		data += "^PQ1\r\n" +
-				"^XZ\r\n";
-				
+			"^XZ\r\n";
+
 		console.log(bufferData + data);
-		return { "data" : bufferData, "zpl" : data };
+		return { "data": bufferData, "zpl": data };
 	}
-	
-	this.setNewObject = function(controller) {
+
+	this.setNewObject = function (controller) {
 		if (controller) {
 			this.newObject = controller.object;
 			this.newObjectController = controller;
@@ -508,12 +509,12 @@ com.logicpartners.labelDesigner = function(canvasid, labelWidth, labelHeight) {
 		}
 	}
 
-	this.addRectangle = function(x, y, width, height) {
+	this.addRectangle = function (x, y, width, height) {
 		this.elements[this.currentLayer++] = new this.Rectangle(x, y, width, height);
 		this.updateCanvas();
 	}
-	
+
 	this.updateLabelSize(labelWidth, labelHeight);
-	
+
 	this.updateCanvas();
 }
