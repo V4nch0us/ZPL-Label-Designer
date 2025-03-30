@@ -39,7 +39,21 @@ com.logicpartners.designerTools.text = function () {
 		}
 
 		this.toZPL = function (labelx, labely, labelwidth, labelheight) {
-			return "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^FD" + this.text + "^FS";
+			// Map arbitrary angle to ZPL rotation values (0, 90, 180, 270)
+			var zplRotation = 'N'; // Default is 'N' (normal/0 degrees)
+
+			// ZPL rotation codes: N=0°, R=90°, I=180°, B=270°
+			if (this.angle > 45 && this.angle <= 135) {
+				zplRotation = 'R'; // 90 degrees
+			} else if (this.angle > 135 && this.angle <= 225) {
+				zplRotation = 'I'; // 180 degrees
+			} else if (this.angle > 225 && this.angle <= 315) {
+				zplRotation = 'B'; // 270 degrees
+			}
+
+			// ^A command specifies font and rotation
+			// Using 0 for font (default font) and the calculated rotation
+			return "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^A0" + zplRotation + "," + this.fontSize + "^FD" + this.text + "^FS";
 		}
 
 		this.draw = function (context) {
