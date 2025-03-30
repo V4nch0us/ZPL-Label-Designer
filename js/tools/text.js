@@ -85,7 +85,13 @@ com.logicpartners.designerTools.text = function () {
 		}
 
 		this.drawActive = function (context) {
-			context.dashedStroke(parseInt(this.x + 1), parseInt(this.y + 1), parseInt(this.x) + parseInt(this.width) - 1, parseInt(this.y) + parseInt(this.height * 0.9) - 1, [2, 2]);
+			context.save();
+			context.translate(this.x + this.width / 2, this.y + this.height / 2);
+			context.rotate(this.angle * Math.PI / 180);
+			var halfWidth = this.width / 2;
+			var halfHeight = (this.height * 0.9) / 2;
+			context.dashedStroke(-halfWidth + 1, -halfHeight + 1, halfWidth - 1, halfHeight - 1, [2, 2]);
+			context.restore();
 		}
 
 		this.hitTest = function (coords) {
