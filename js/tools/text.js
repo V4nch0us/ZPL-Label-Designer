@@ -95,7 +95,31 @@ com.logicpartners.designerTools.text = function () {
 		}
 
 		this.hitTest = function (coords) {
-			return (coords.x >= parseInt(this.x) && coords.x <= parseInt(this.x) + parseInt(this.width) && coords.y >= parseInt(this.y) && coords.y <= parseInt(this.y) + parseInt(this.height) * 0.75);
+			// If no rotation, use simple hit test
+			if (this.angle === 0) {
+				return (coords.x >= parseInt(this.x) && coords.x <= parseInt(this.x) + parseInt(this.width) &&
+					coords.y >= parseInt(this.y) && coords.y <= parseInt(this.y) + parseInt(this.height) * 0.75);
+			}
+
+			// For rotated text, transform the coordinates
+			var centerX = this.x + this.width / 2;
+			var centerY = this.y + this.height / 2;
+
+			// Translate to origin
+			var translatedX = coords.x - centerX;
+			var translatedY = coords.y - centerY;
+
+			// Rotate in the opposite direction
+			var angleRad = -this.angle * Math.PI / 180;
+			var rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+			var rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+			// Check if the rotated point is within the bounds
+			var halfWidth = this.width / 2;
+			var halfHeight = (this.height * 0.75) / 2;
+
+			return (rotatedX >= -halfWidth && rotatedX <= halfWidth &&
+				rotatedY >= -halfHeight && rotatedY <= halfHeight);
 		}
 	}
 }
