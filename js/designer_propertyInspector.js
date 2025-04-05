@@ -90,37 +90,56 @@ com.logicpartners.propertyInspector = function (designer, canvas) {
 							});
 
 						var elementValue;
-						if (key == "angle") {
-							elementValue = $('<div></div>')
-								.css({
-									"float": "left",
-									"height": "22px",
-									"display": "flex",
-									"justify-content": "space-between",
-								});
-
-							[0, 90, 180, 270].forEach(function (angle) {
-								var button = $('<button>' + angle + '</button>')
+						switch (key) {
+							case "dynamic":
+								elementValue = $('<input type="checkbox" name="' + key + '" value="' + activeElement[key] + '">')
 									.css({
-										"flex": "1",
-										"margin": "0 2px",
-										"cursor": "pointer"
+										"width": "145px",
+										"height": "20px",
+										"float": "left",
+										"margin-left": "5px",
+										"margin-right": "5px"
 									})
 									.on("click", function () {
-										activeElement.angle = angle;
+										activeElement.setDynamic(!activeElement.dynamic);
 										self.labelDesigner.updateCanvas();
 									});
-								elementValue.append(button);
-							});
-						} else {
-							elementValue = $('<input type="text" name="' + key + '" value="' + activeElement[key] + '">')
-								.css({
-									"width": "145px",
-									"float": "left",
-									"height": "22px",
-									"line-height": "20px",
-									"padding-left": "5px"
+								break;
+
+							case "angle":
+								elementValue = $('<div></div>')
+									.css({
+										"float": "left",
+										"height": "22px",
+										"display": "flex",
+										"justify-content": "space-between",
+									});
+
+								[0, 90, 180, 270].forEach(function (angle) {
+									var button = $('<button>' + angle + '</button>')
+										.css({
+											"flex": "1",
+											"margin": "0 2px",
+											"cursor": "pointer"
+										})
+										.on("click", function () {
+											activeElement.angle = angle;
+											self.labelDesigner.updateCanvas();
+										});
+									elementValue.append(button);
 								});
+								break;
+
+							default:
+								elementValue = $('<input type="text" name="' + key + '" value="' + activeElement[key] + '">')
+									.css({
+										"width": "145px",
+										"float": "left",
+										"height": "22px",
+										"line-height": "20px",
+										"padding-left": "5px"
+									});
+								break;
 						}
 
 

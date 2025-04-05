@@ -476,7 +476,6 @@ com.logicpartners.labelDesigner = function (canvasid, labelWidth, labelHeight) {
 	this.generateZPL = function () {
 		var data = "^XA\r\n" +
 			"^CI28\r\n" +
-			"^CFN,50\r\n" +
 			"^PR12\r\n" +
 			"^LRY\r\n" +
 			"^MD30\r\n" +

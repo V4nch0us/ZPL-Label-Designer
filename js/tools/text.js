@@ -19,6 +19,7 @@ com.logicpartners.designerTools.text = function () {
 		this.width = 100;
 		this.height = 0;
 		this.angle = 0;
+		this.dynamic = false;
 
 		this.readonly = ["width", "height", "name", "fontType", "x", "y"];
 
@@ -51,9 +52,12 @@ com.logicpartners.designerTools.text = function () {
 				zplRotation = 'B'; // 270 degrees
 			}
 
+			// Dynamic suffix
+			var dynamicSuffix = this.dynamic ? '/u1d' : '';
+
 			// ^A command specifies font and rotation
 			// Using 0 for font (default font) and the calculated rotation
-			return "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^A0" + zplRotation + "," + this.fontSize + "^FD" + this.text + "^FS\r\n";
+			return "^CFN," + this.height + "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^A0" + zplRotation + "," + this.fontSize + "^FD" + this.text + dynamicSuffix + "^FS\r\n";
 		}
 
 		this.draw = function (context) {
@@ -72,6 +76,14 @@ com.logicpartners.designerTools.text = function () {
 			context.restore();
 			context.fillStyle = oColor;
 			//context.fillRect(this.x, this.y, this.width, this.height);
+		}
+
+		this.setDynamic = function (isDynamic) {
+			this.dynamic = isDynamic;
+		}
+
+		this.getDynamic = function () {
+			return this.dynamic;
 		}
 
 		this.setWidth = function (width) {
