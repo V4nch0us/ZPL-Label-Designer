@@ -130,6 +130,62 @@ com.logicpartners.propertyInspector = function (designer, canvas) {
 								});
 								break;
 
+							case "squareSize":
+								elementValue = $('<select name="' + key + '">')
+									.css({
+										"width": "145px",
+										"float": "left",
+										"height": "22px",
+										"line-height": "20px",
+										"padding-left": "5px"
+									});
+
+								// Add all the square size options
+								var squareSizes = [
+									"10x10", "12x12", "14x14", "16x16", "18x18", "20x20", "22x22",
+									"24x24", "26x26", "32x32", "36x36", "40x40", "44x44", "48x48",
+									"52x52", "64x64", "72x72", "80x80", "88x88", "96x96",
+									"104x104", "120x120", "132x132", "144x144"
+								];
+
+								squareSizes.forEach(function (size) {
+									var option = $('<option value="' + size + '">' + size + '</option>');
+									if (size === activeElement[key]) {
+										option.attr('selected', 'selected');
+									}
+									elementValue.append(option);
+								});
+
+								elementValue.on("change", function () {
+									activeElement.squareSize = $(this).val();
+									self.labelDesigner.updateCanvas();
+								});
+								break;
+
+							case "angle":
+								elementValue = $('<div></div>')
+									.css({
+										"float": "left",
+										"height": "22px",
+										"display": "flex",
+										"justify-content": "space-between",
+									});
+
+								[0, 90, 180, 270].forEach(function (angle) {
+									var button = $('<button>' + angle + '</button>')
+										.css({
+											"flex": "1",
+											"margin": "0 2px",
+											"cursor": "pointer"
+										})
+										.on("click", function () {
+											activeElement.angle = angle;
+											self.labelDesigner.updateCanvas();
+										});
+									elementValue.append(button);
+								});
+								break;
+
 							default:
 								elementValue = $('<input type="text" name="' + key + '" value="' + activeElement[key] + '">')
 									.css({
