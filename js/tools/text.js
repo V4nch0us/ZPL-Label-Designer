@@ -57,7 +57,7 @@ com.logicpartners.designerTools.text = function () {
 
 			// ^A command specifies font and rotation
 			// Using 0 for font (default font) and the calculated rotation
-			return "^CFN," + this.height + "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^A0" + zplRotation + "," + this.fontSize + "^FD" + this.text + dynamicSuffix + "^FS\r\n";
+			return "^CFN," + this.height + "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^A0" + zplRotation + "," + this.fontSize + "^FD" + dynamicSuffix + this.text + dynamicSuffix + "^FS\r\n";
 		}
 
 		this.draw = function (context) {

@@ -479,8 +479,8 @@ com.logicpartners.labelDesigner = function (canvasid, labelWidth, labelHeight) {
 			"^PR12\r\n" +
 			"^LRY\r\n" +
 			"^MD30\r\n" +
-			"^PW" + this.labelWidth + "\r\n" +
-			"^LL" + this.labelHeight + "\r\n" +
+			// "^PW" + this.labelWidth + "\r\n" +
+			// "^LL" + this.labelHeight + "\r\n" +
 			"^PON\r\n";
 
 		var bufferData = "";
