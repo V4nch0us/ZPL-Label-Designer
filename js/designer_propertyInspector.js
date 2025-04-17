@@ -91,6 +91,7 @@ com.logicpartners.propertyInspector = function (designer, canvas) {
 
 						var elementValue;
 						switch (key) {
+
 							case "dynamic":
 								elementValue = $('<input type="checkbox" name="' + key + '" value="' + activeElement[key] + '">')
 									.css({

@@ -15,14 +15,16 @@ com.logicpartners.designerTools.barcode = function () {
 		// Canvas size will be updated in draw function based on scale
 		this.name = "Barcode " + self.counter++;
 		this.text = "BARCODE";
+		this.barcodeType = "code128"; // Default barcode type
 		this.x = x;
 		this.y = y;
 		this.scale = 2; // Default scale
 		this.height = this.scale * 50; // Height depends on scale by default
 		this.customHeight = null; // Custom height (when set, overrides scale-based height)
 		this.angle = 0; // Default angle (no rotation)
+		this.handle = null; // Initialize handle property
 
-		this.readonly = ["name", "x", "y", "customHeight"];
+		this.readonly = ["name", "x", "y", "customHeight", "handle", "barcodeType"];
 
 		this.getZPLData = function () {
 			return "";
@@ -50,6 +52,83 @@ com.logicpartners.designerTools.barcode = function () {
 				"^FD" + this.text + "^FS\r\n";
 		}
 
+		// Define getWidth function at the correct level
+		this.getWidth = function () {
+			return this.scale * 50; // Return width based on scale
+		}
+
+		// Define setHeight function at the correct level
+		this.setHeight = function (height) {
+			if (height) {
+				// Set custom height
+				this.customHeight = height;
+				this.height = height;
+			} else {
+				// Reset to scale-based height
+				this.customHeight = null;
+				this.height = this.scale * 50;
+			}
+		}
+
+		// Define getHeight function at the correct level
+		this.getHeight = function () {
+			return this.height; // Return the current height (custom or scale-based)
+		}
+
+		// Define setHandle function at the correct level
+		this.setHandle = function (coords) {
+			this.handle = this.resizeZone(coords);
+		}
+
+		// Define getHandle function at the correct level
+		this.getHandle = function () {
+			return this.handle;
+		}
+
+		// Define drawActive function at the correct level
+		this.drawActive = function (context) {
+			var scaledWidth = this.scale * 50;
+			context.save();
+			context.translate(this.x + (width > 0 ? width : scaledWidth) / 2, this.y + this.height / 2);
+			context.rotate(this.angle * Math.PI / 180);
+			var halfWidth = (width > 0 ? width : scaledWidth) / 2;
+			var halfHeight = this.height / 2;
+			context.dashedStroke(-halfWidth + 1, -halfHeight + 1, halfWidth - 1, halfHeight - 1, [2, 2]);
+			context.restore();
+		}
+
+		// Define hitTest function at the correct level
+		this.hitTest = function (coords) {
+			var scaledWidth = this.scale * 50;
+
+			// If no rotation, use simple hit test
+			if (this.angle === 0) {
+				return (coords.x >= parseInt(this.x) && coords.x <= parseInt(this.x) + parseInt(width > 0 ? width : scaledWidth) &&
+					coords.y >= parseInt(this.y) && coords.y <= parseInt(this.y) + parseInt(this.height));
+			}
+
+			// For rotated barcode, transform the coordinates
+			var centerX = this.x + (width > 0 ? width : scaledWidth) / 2;
+			var centerY = this.y + this.height / 2;
+
+			// Translate to origin
+			var translatedX = coords.x - centerX;
+			var translatedY = coords.y - centerY;
+
+			// Rotate in the opposite direction
+			var angleRad = -this.angle * Math.PI / 180;
+			var rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+			var rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+			// Check if the rotated point is within the bounds
+			var halfWidth = (width > 0 ? width : scaledWidth) / 2;
+			var halfHeight = this.height / 2;
+
+			return (rotatedX >= -halfWidth && rotatedX <= halfWidth &&
+				rotatedY >= -halfHeight && rotatedY <= halfHeight);
+		}
+
+		// Define draw function at the correct level
 		this.draw = function (context) {
 			console.log(this.text);
 
@@ -119,78 +198,5 @@ com.logicpartners.designerTools.barcode = function () {
 				context.restore();
 			}
 		}
-
-		// this.setWidth = function (width) {
-		// 	//this.width = width;
-		// }
-
-		this.getWidth = function () {
-			return this.scale * 50; // Return width based on scale
-		}
-
-		this.setHeight = function (height) {
-			if (height) {
-				// Set custom height
-				this.customHeight = height;
-				this.height = height;
-			} else {
-				// Reset to scale-based height
-				this.customHeight = null;
-				this.height = this.scale * 50;
-			}
-		}
-
-		this.getHeight = function () {
-			return this.height; // Return the current height (custom or scale-based)
-		}
-
-		this.setHandle = function (coords) {
-			this.handle = this.resizeZone(coords);
-		}
-
-		this.getHandle = function () {
-			return this.handle;
-		}
-
-		this.drawActive = function (context) {
-			var scaledWidth = this.scale * 50;
-			context.save();
-			context.translate(this.x + (width > 0 ? width : scaledWidth) / 2, this.y + this.height / 2);
-			context.rotate(this.angle * Math.PI / 180);
-			var halfWidth = (width > 0 ? width : scaledWidth) / 2;
-			var halfHeight = this.height / 2;
-			context.dashedStroke(-halfWidth + 1, -halfHeight + 1, halfWidth - 1, halfHeight - 1, [2, 2]);
-			context.restore();
-		}
-
-		this.hitTest = function (coords) {
-			var scaledWidth = this.scale * 50;
-
-			// If no rotation, use simple hit test
-			if (this.angle === 0) {
-				return (coords.x >= parseInt(this.x) && coords.x <= parseInt(this.x) + parseInt(width > 0 ? width : scaledWidth) &&
-					coords.y >= parseInt(this.y) && coords.y <= parseInt(this.y) + parseInt(this.height));
-			}
-
-			// For rotated barcode, transform the coordinates
-			var centerX = this.x + (width > 0 ? width : scaledWidth) / 2;
-			var centerY = this.y + this.height / 2;
-
-			// Translate to origin
-			var translatedX = coords.x - centerX;
-			var translatedY = coords.y - centerY;
-
-			// Rotate in the opposite direction
-			var angleRad = -this.angle * Math.PI / 180;
-			var rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
-			var rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
-
-			// Check if the rotated point is within the bounds
-			var halfWidth = (width > 0 ? width : scaledWidth) / 2;
-			var halfHeight = this.height / 2;
-
-			return (rotatedX >= -halfWidth && rotatedX <= halfWidth &&
-				rotatedY >= -halfHeight && rotatedY <= halfHeight);
-		}
 	}
-};
+}
