@@ -155,6 +155,14 @@ com.logicpartners.designerTools.datamatrix = function () {
             }
         }
 
+        this.setDynamic = function (isDynamic) {
+            this.dynamic = isDynamic;
+        }
+
+        this.getDynamic = function () {
+            return this.dynamic;
+        }
+
         this.getWidth = function () {
             return this.scale * 50; // Return width based on scale
         }

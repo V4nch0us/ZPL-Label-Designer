@@ -23,8 +23,17 @@ com.logicpartners.designerTools.barcode = function () {
 		this.customHeight = null; // Custom height (when set, overrides scale-based height)
 		this.angle = 0; // Default angle (no rotation)
 		this.handle = null; // Initialize handle property
+		this.dynamic = false; // Dynamic property for variable data
 
 		this.readonly = ["name", "x", "y", "customHeight", "handle", "barcodeType"];
+
+		this.setDynamic = function (isDynamic) {
+			this.dynamic = isDynamic;
+		}
+
+		this.getDynamic = function () {
+			return this.dynamic;
+		}
 
 		// Define getWidth function at the object level
 		this.getWidth = function () {
@@ -107,6 +116,9 @@ com.logicpartners.designerTools.barcode = function () {
 		};
 
 		this.toZPL = function (labelx, labely, labelwidth, labelheight) {
+
+			// Dynamic suffix for variable data
+			var dynamicSuffix = this.dynamic ? '/u1d' : '';
 			// Map arbitrary angle to ZPL rotation values (0, 90, 180, 270)
 			var zplRotation = 'N'; // Default is 'N' (normal/0 degrees)
 
@@ -125,7 +137,7 @@ com.logicpartners.designerTools.barcode = function () {
 			return "^FO" + (this.x - labelx) + "," + (this.y - labely) +
 				"^BY" + this.scale +
 				"^BC" + zplRotation + "," + this.height + ",N,N,N" +
-				"^FD" + this.text + "^FS\r\n";
+				"^FD" + dynamicSuffix + this.text + dynamicSuffix + "^FS\r\n";
 		};
 
 		this.draw = function (context) {
