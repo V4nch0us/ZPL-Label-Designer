@@ -150,172 +150,142 @@ com.logicpartners.designerTools.image = function () {
 
 		this.readonly = ["width", "height", "data", "zplGraphic", "uniqueID"];
 
-		this.getZPLData = function () {
-			var GRFVal = function (nibble) {
-				var nibbleMap = {
-					"0": "0000",
-					"1": "0001",
-					"2": "0010",
-					"3": "0011",
-					"4": "0100",
-					"5": "0101",
-					"6": "0110",
-					"7": "0111",
-					"8": "1000",
-					"9": "1001",
-					"A": "1010",
-					"B": "1011",
-					"C": "1100",
-					"D": "1101",
-					"E": "1110",
-					"F": "1111",
-				};
+		// this.getZPLData = function () {
+		// 	var GRFVal = function (nibble) {
+		// 		var nibbleMap = {
+		// 			"0": "0000",
+		// 			"1": "0001",
+		// 			"2": "0010",
+		// 			"3": "0011",
+		// 			"4": "0100",
+		// 			"5": "0101",
+		// 			"6": "0110",
+		// 			"7": "0111",
+		// 			"8": "1000",
+		// 			"9": "1001",
+		// 			"A": "1010",
+		// 			"B": "1011",
+		// 			"C": "1100",
+		// 			"D": "1101",
+		// 			"E": "1110",
+		// 			"F": "1111",
+		// 		};
 
-				for (key in nibbleMap) {
-					if (nibbleMap[key] == nibble) {
-						return key;
-					}
-				}
+		// 		for (key in nibbleMap) {
+		// 			if (nibbleMap[key] == nibble) {
+		// 				return key;
+		// 			}
+		// 		}
 
-				return "";
+		// 		return "";
+		// 	}
+
+		// 	var imgData = "";
+		// 	var bytesPerLine = Math.ceil(this.width / 8);
+		// 	console.log(bytesPerLine);
+		// 	console.log(this.width);
+		// 	console.log(bytesPerLine);
+		// 	for (var y = 0; y < this.height; y++) {
+		// 		var nibble = "";
+		// 		var bytes = 0;
+		// 		for (var x = 0; x < this.width; x++) {
+		// 			var point = 4 * (this.width * y + x);
+		// 			if (this.data[point + 1] == 0) {
+		// 				nibble += "1";
+		// 			}
+		// 			else nibble += "0";
+
+		// 			if (nibble.length > 7) {
+		// 				imgData += GRFVal(nibble.substring(0, 4)) + GRFVal(nibble.substring(4, 8));
+		// 				nibble = "";
+		// 				bytes++;
+		// 			}
+		// 		}
+
+		// 		if (nibble.length > 0) {
+		// 			while (nibble.length < 8) nibble += "0";
+		// 			imgData += GRFVal(nibble.substring(0, 4)) + GRFVal(nibble.substring(4, 8));
+		// 			nibble = "";
+		// 			bytes++;
+		// 		}
+
+		// 		while (bytes < bytesPerLine) {
+		// 			imgData += GRFVal("0000") + GRFVal("0000");
+		// 			bytes++;
+		// 		}
+
+		// 		imgData += "\n";
+		// 	}
+
+		// 	return "~DGIMG" + this.uniqueID + "," + bytesPerLine * height + "," + bytesPerLine + "," + imgData;
+		// },
+
+
+
+		this.toZPL = function (labelx, labely, labelwidth, labelheight) {
+			if (!this.data) return "";
+
+			if (this.zplGraphic) {
+				return "^FO" + (this.x - labelx) + "," + (this.y - labely) + this.zplGraphic + "^FS";
 			}
 
-			var imgData = "";
-			var bytesPerLine = Math.ceil(this.width / 8);
-			console.log(bytesPerLine);
-			console.log(this.width);
-			console.log(bytesPerLine);
+			return ""; // Graphic not yet converted
+		};
+
+		this.convertImageToZPL = function (callback) {
+			const canvas = document.createElement('canvas');
+			canvas.width = this.width;
+			canvas.height = this.height;
+			const ctx = canvas.getContext('2d');
+
+			const imgData = ctx.createImageData(this.width, this.height);
+			for (let i = 0; i < this.data.length; i++) {
+				imgData.data[i] = this.data[i];
+			}
+			ctx.putImageData(imgData, 0, 0);
+
+			const img = new Image();
+			img.onload = () => {
+				// Call external lib method
+				const result = imageToZ64(img); // external method, already returns ZPL data
+
+				if (result && result.z64) {
+					this.zplGraphic = `^GFA,${result.length},${result.length},${result.rowlen},${result.z64}`;
+					if (callback) callback(this.zplGraphic);
+				} else {
+					console.error("imageToZ64 returned invalid result");
+					if (callback) callback(null);
+				}
+			};
+			img.onerror = () => {
+				console.error("Error loading image from canvas");
+				if (callback) callback(null);
+			};
+
+			// Convert canvas to base64
+			img.src = canvas.toDataURL("image/png");
+		};
+
+
+
+		this.draw = function (context, width, height) {
+			var ctxData = context.getImageData(0, 0, width, height);
 			for (var y = 0; y < this.height; y++) {
-				var nibble = "";
-				var bytes = 0;
 				for (var x = 0; x < this.width; x++) {
-					var point = 4 * (this.width * y + x);
-					if (this.data[point + 1] == 0) {
-						nibble += "1";
-					}
-					else nibble += "0";
-
-					if (nibble.length > 7) {
-						imgData += GRFVal(nibble.substring(0, 4)) + GRFVal(nibble.substring(4, 8));
-						nibble = "";
-						bytes++;
+					if (this.x + x >= 0 && this.x + x < width
+						&& this.y + y >= 0 && this.y + y < height) {
+						var drawPoint = 4 * (width * (this.y + y) + this.x + x);
+						var drawFromPoint = 4 * (this.width * y + x);
+						ctxData.data[drawPoint] = this.data[drawFromPoint];
+						ctxData.data[drawPoint + 1] = this.data[drawFromPoint + 1];
+						ctxData.data[drawPoint + 2] = this.data[drawFromPoint + 2];
+						ctxData.data[drawPoint + 3] = this.data[drawFromPoint + 3];
 					}
 				}
-
-				if (nibble.length > 0) {
-					while (nibble.length < 8) nibble += "0";
-					imgData += GRFVal(nibble.substring(0, 4)) + GRFVal(nibble.substring(4, 8));
-					nibble = "";
-					bytes++;
-				}
-
-				while (bytes < bytesPerLine) {
-					imgData += GRFVal("0000") + GRFVal("0000");
-					bytes++;
-				}
-
-				imgData += "\n";
 			}
 
-			return "~DGIMG" + this.uniqueID + "," + bytesPerLine * height + "," + bytesPerLine + "," + imgData;
-		},
-
-
-
-			this.toZPL = function (labelx, labely, labelwidth, labelheight) {
-				// Check if we have image data to convert
-				if (!this.data) {
-					return "";
-				}
-
-				// Two options for ZPL image conversion:
-				// 1. Use local conversion (original method)
-				// 2. Use Labelary API for conversion
-
-				// If we have already converted the image using the API
-				if (this.zplGraphic) {
-					return "^FO" + (this.x - labelx) + "," + (this.y - labely) + this.zplGraphic + "^FS";
-				}
-
-				// Default to original method
-				return "^FO" + (this.x - labelx) + "," + (this.y - labely) + "^XGR:IMG" + this.uniqueID + ",1,1^FS";
-			},
-
-			// New method to convert image to ZPL using Labelary API
-			this.convertImageToZPL = function (callback) {
-				// Create a canvas with the image data
-				var canvas = document.createElement('canvas');
-				canvas.width = this.width;
-				canvas.height = this.height;
-				var ctx = canvas.getContext('2d');
-
-				// Create ImageData object
-				var imgData = ctx.createImageData(this.width, this.height);
-
-				// Copy the stored pixel data to the ImageData object
-				for (var i = 0; i < this.data.length; i++) {
-					imgData.data[i] = this.data[i];
-				}
-
-				// Put the image data on the canvas
-				ctx.putImageData(imgData, 0, 0);
-
-				// Convert canvas to blob
-				canvas.toBlob(function (blob) {
-					// Create FormData object
-					var formData = new FormData();
-					formData.append('file', blob, 'image.png');
-
-					// Send to Labelary API
-					var xhr = new XMLHttpRequest();
-					xhr.open('POST', 'http://api.labelary.com/v1/graphics', true);
-					// Add Accept header for JSON response
-					xhr.setRequestHeader('Accept', 'application/json');
-					xhr.onload = function () {
-						if (xhr.status === 200) {
-							try {
-								// Parse JSON response
-								var response = JSON.parse(xhr.responseText);
-								// Format ZPL graphic command using the JSON data
-								var zplGraphic = "^GFA," + response.totalBytes + "," + response.totalBytes + "," + response.rowBytes + "," + response.data;
-								// Store the ZPL graphic command
-								if (callback) callback(zplGraphic);
-							} catch (e) {
-								console.error('Error parsing JSON response:', e);
-								if (callback) callback(null);
-							}
-						} else {
-							console.error('Error converting image to ZPL:', xhr.statusText);
-							if (callback) callback(null);
-						}
-					};
-					xhr.onerror = function () {
-						console.error('Network error during image conversion');
-						if (callback) callback(null);
-					};
-					xhr.send(formData);
-				}, 'image/png');
-			},
-
-
-			this.draw = function (context, width, height) {
-				var ctxData = context.getImageData(0, 0, width, height);
-				for (var y = 0; y < this.height; y++) {
-					for (var x = 0; x < this.width; x++) {
-						if (this.x + x >= 0 && this.x + x < width
-							&& this.y + y >= 0 && this.y + y < height) {
-							var drawPoint = 4 * (width * (this.y + y) + this.x + x);
-							var drawFromPoint = 4 * (this.width * y + x);
-							ctxData.data[drawPoint] = this.data[drawFromPoint];
-							ctxData.data[drawPoint + 1] = this.data[drawFromPoint + 1];
-							ctxData.data[drawPoint + 2] = this.data[drawFromPoint + 2];
-							ctxData.data[drawPoint + 3] = this.data[drawFromPoint + 3];
-						}
-					}
-				}
-
-				context.putImageData(ctxData, 0, 0);
-			}
+			context.putImageData(ctxData, 0, 0);
+		}
 
 		this.setWidth = function (width) {
 			//this.width = width;
