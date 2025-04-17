@@ -91,6 +91,28 @@ com.logicpartners.propertyInspector = function (designer, canvas) {
 
 						var elementValue;
 						switch (key) {
+							case "barcodeType":
+								elementValue = $('<select name="' + key + '">')
+									.css({
+										"width": "145px",
+										"height": "22px",
+										"float": "left",
+										"margin-right": "5px"
+									})
+									.on("change", function () {
+										activeElement.barcodeType = $(this).val();
+										self.labelDesigner.updateCanvas();
+									});
+
+								["code128", "qrcode", "datamatrix"].forEach(function (type) {
+									$('<option></option>')
+										.val(type)
+										.text(type)
+										.prop('selected', activeElement[key] === type)
+										.appendTo(elementValue);
+								});
+								break;
+
 							case "dynamic":
 								elementValue = $('<input type="checkbox" name="' + key + '" value="' + activeElement[key] + '">')
 									.css({
