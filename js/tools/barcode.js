@@ -26,38 +26,12 @@ com.logicpartners.designerTools.barcode = function () {
 
 		this.readonly = ["name", "x", "y", "customHeight", "handle", "barcodeType"];
 
-		this.getZPLData = function () {
-			return "";
-		}
-
-		this.toZPL = function (labelx, labely, labelwidth, labelheight) {
-			// Map arbitrary angle to ZPL rotation values (0, 90, 180, 270)
-			var zplRotation = 'N'; // Default is 'N' (normal/0 degrees)
-
-			// ZPL rotation codes: N=0°, R=90°, I=180°, B=270°
-			if (this.angle > 45 && this.angle <= 135) {
-				zplRotation = 'R'; // 90 degrees
-			} else if (this.angle > 135 && this.angle <= 225) {
-				zplRotation = 'I'; // 180 degrees
-			} else if (this.angle > 225 && this.angle <= 315) {
-				zplRotation = 'B'; // 270 degrees
-			}
-
-			// Use ^BC for Code 128 barcode format
-			// ^BY sets the module width (bar width) based on scale
-			// ^BC parameters: orientation, height, interpretation line, check digit
-			return "^FO" + (this.x - labelx) + "," + (this.y - labely) +
-				"^BY" + this.scale +
-				"^BC" + zplRotation + "," + this.height + ",N,N,N" +
-				"^FD" + this.text + "^FS\r\n";
-		}
-
-		// Define getWidth function at the correct level
+		// Define getWidth function at the object level
 		this.getWidth = function () {
 			return this.scale * 50; // Return width based on scale
-		}
+		};
 
-		// Define setHeight function at the correct level
+		// Define setHeight function at the object level
 		this.setHeight = function (height) {
 			if (height) {
 				// Set custom height
@@ -68,36 +42,24 @@ com.logicpartners.designerTools.barcode = function () {
 				this.customHeight = null;
 				this.height = this.scale * 50;
 			}
-		}
+		};
 
-		// Define getHeight function at the correct level
+		// Define getHeight function at the object level
 		this.getHeight = function () {
 			return this.height; // Return the current height (custom or scale-based)
-		}
+		};
 
-		// Define setHandle function at the correct level
+		// Define setHandle function at the object level
 		this.setHandle = function (coords) {
 			this.handle = this.resizeZone(coords);
-		}
+		};
 
-		// Define getHandle function at the correct level
+		// Define getHandle function at the object level
 		this.getHandle = function () {
 			return this.handle;
-		}
+		};
 
-		// Define drawActive function at the correct level
-		this.drawActive = function (context) {
-			var scaledWidth = this.scale * 50;
-			context.save();
-			context.translate(this.x + (width > 0 ? width : scaledWidth) / 2, this.y + this.height / 2);
-			context.rotate(this.angle * Math.PI / 180);
-			var halfWidth = (width > 0 ? width : scaledWidth) / 2;
-			var halfHeight = this.height / 2;
-			context.dashedStroke(-halfWidth + 1, -halfHeight + 1, halfWidth - 1, halfHeight - 1, [2, 2]);
-			context.restore();
-		}
-
-		// Define hitTest function at the correct level
+		// Define hitTest function at the object level
 		this.hitTest = function (coords) {
 			var scaledWidth = this.scale * 50;
 
@@ -126,9 +88,46 @@ com.logicpartners.designerTools.barcode = function () {
 
 			return (rotatedX >= -halfWidth && rotatedX <= halfWidth &&
 				rotatedY >= -halfHeight && rotatedY <= halfHeight);
-		}
+		};
 
-		// Define draw function at the correct level
+		// Define drawActive function at the object level
+		this.drawActive = function (context) {
+			var scaledWidth = this.scale * 50;
+			context.save();
+			context.translate(this.x + (width > 0 ? width : scaledWidth) / 2, this.y + this.height / 2);
+			context.rotate(this.angle * Math.PI / 180);
+			var halfWidth = (width > 0 ? width : scaledWidth) / 2;
+			var halfHeight = this.height / 2;
+			context.dashedStroke(-halfWidth + 1, -halfHeight + 1, halfWidth - 1, halfHeight - 1, [2, 2]);
+			context.restore();
+		};
+
+		this.getZPLData = function () {
+			return "";
+		};
+
+		this.toZPL = function (labelx, labely, labelwidth, labelheight) {
+			// Map arbitrary angle to ZPL rotation values (0, 90, 180, 270)
+			var zplRotation = 'N'; // Default is 'N' (normal/0 degrees)
+
+			// ZPL rotation codes: N=0°, R=90°, I=180°, B=270°
+			if (this.angle > 45 && this.angle <= 135) {
+				zplRotation = 'R'; // 90 degrees
+			} else if (this.angle > 135 && this.angle <= 225) {
+				zplRotation = 'I'; // 180 degrees
+			} else if (this.angle > 225 && this.angle <= 315) {
+				zplRotation = 'B'; // 270 degrees
+			}
+
+			// Use ^BC for Code 128 barcode format
+			// ^BY sets the module width (bar width) based on scale
+			// ^BC parameters: orientation, height, interpretation line, check digit
+			return "^FO" + (this.x - labelx) + "," + (this.y - labely) +
+				"^BY" + this.scale +
+				"^BC" + zplRotation + "," + this.height + ",N,N,N" +
+				"^FD" + this.text + "^FS\r\n";
+		};
+
 		this.draw = function (context) {
 			console.log(this.text);
 
@@ -197,6 +196,6 @@ com.logicpartners.designerTools.barcode = function () {
 				context.fillText('Invalid barcode: ' + this.text, -scaledWidth / 2 + 5, 0);
 				context.restore();
 			}
-		}
-	}
-}
+		};
+	};
+};
