@@ -24,7 +24,16 @@
     <script>
         var canvasDesigner = null;
         $(document).ready(function () {
-            canvasDesigner = new com.logicpartners.labelDesigner('labelDesigner', 2, 3);
+            // Convert mm to inches (1 inch = 25.4 mm)
+            function mmToInches(mm) {
+                return mm / 25.4;
+            }
+
+            // Default size in mm (50.8 mm x 76.2 mm, which is 2 x 3 inches)
+            var widthMM = 50.8;
+            var heightMM = 76.2;
+
+            canvasDesigner = new com.logicpartners.labelDesigner('labelDesigner', mmToInches(widthMM), mmToInches(heightMM));
             canvasDesigner.labelInspector.addTool(new com.logicpartners.labelControl.size(canvasDesigner));
             canvasDesigner.labelInspector.addTool(new com.logicpartners.labelControl.generatezpl(canvasDesigner));
             canvasDesigner.toolbar.addTool(new com.logicpartners.designerTools.text());

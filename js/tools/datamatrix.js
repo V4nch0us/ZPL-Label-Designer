@@ -69,14 +69,29 @@ com.logicpartners.designerTools.datamatrix = function () {
         this.draw = function (context) {
             console.log(this.text);
 
-            // Update height based on scale
+            // Calculate drawing scale based on squareSize
+            // This only affects the visual representation, not the ZPL output
+            var drawScale = this.scale; // Default to the actual scale value
+
+            // If squareSize is set, calculate a corresponding scale value
+            // Map from 10x10 = scale 2 to 80x80 = scale 14
+            if (this.squareSize) {
+                var size = parseInt(this.squareSize.split('x')[0]); // Get the first number from squareSize
+                if (!isNaN(size) && size >= 10 && size <= 80) {
+                    // Linear mapping from size to scale: 10->2, 80->14
+                    drawScale = 2 + (size - 10) * (14 - 2) / (80 - 10);
+                    drawScale = Math.round(drawScale * 10) / 10; // Round to 1 decimal place
+                }
+            }
+
+            // Update height based on scale (for consistency with other properties)
             this.height = this.scale * 50;
 
             // Clear the canvas holder
             var canvas = canvasHolder[0];
-            // Update canvas size based on scale
-            canvas.width = this.scale * 50;
-            canvas.height = this.scale * 50;
+            // Update canvas size based on drawScale (not the actual scale)
+            canvas.width = drawScale * 50;
+            canvas.height = drawScale * 50;
             var ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -84,9 +99,9 @@ com.logicpartners.designerTools.datamatrix = function () {
             var options = {
                 bcid: "datamatrix",    // Barcode type (datamatrix)
                 text: this.text,        // Text to encode
-                scale: this.scale,      // Scale factor
+                scale: drawScale,       // Use drawScale for visual rendering
                 height: 10,             // Module height, in millimeters
-                width: 10,             // Module width, in millimeters
+                width: 10,              // Module width, in millimeters
                 includetext: false,     // Show human-readable text
                 textxalign: 'center',   // Text alignment
             };
@@ -157,13 +172,71 @@ com.logicpartners.designerTools.datamatrix = function () {
         }
 
         this.drawActive = function (context) {
-            var scaledWidth = this.scale * 50;
-            context.dashedStroke(parseInt(this.x + 1), parseInt(this.y + 1), parseInt(this.x) + parseInt(width > 0 ? width : scaledWidth) - 1, parseInt(this.y) + parseInt(this.height / 1.75) - 1, [2, 2]);
+            // Calculate drawing scale based on squareSize (same as in draw function)
+            var drawScale = this.scale; // Default to the actual scale value
+            if (this.squareSize) {
+                var size = parseInt(this.squareSize.split('x')[0]);
+                if (!isNaN(size) && size >= 10 && size <= 80) {
+                    drawScale = 2 + (size - 10) * (14 - 2) / (80 - 10);
+                    drawScale = Math.round(drawScale * 10) / 10;
+                }
+            }
+
+            // Use the actual rendered width from canvas or calculate based on drawScale
+            var visualWidth = width > 0 ? width : drawScale * 50;
+
+            // Save context state before rotation
+            context.save();
+            // Translate to the center of where the datamatrix should be
+            context.translate(this.x + visualWidth / 2, this.y + visualWidth / 2);
+            // Rotate by the specified angle
+            context.rotate(this.angle * Math.PI / 180);
+            // Draw dashed rectangle around the datamatrix
+            context.dashedStroke(-visualWidth / 2 + 1, -visualWidth / 2 + 1, visualWidth / 2 - 1, visualWidth / 2 - 1, [2, 2]);
+            // Restore context to original state
+            context.restore();
         }
 
         this.hitTest = function (coords) {
-            var scaledWidth = this.scale * 50;
-            return (coords.x >= parseInt(this.x) && coords.x <= parseInt(this.x) + parseInt(width > 0 ? width : scaledWidth) && coords.y >= parseInt(this.y) && coords.y <= parseInt(this.y) + parseInt(this.height));
+            // Calculate drawing scale based on squareSize (same as in draw function)
+            var drawScale = this.scale; // Default to the actual scale value
+            if (this.squareSize) {
+                var size = parseInt(this.squareSize.split('x')[0]);
+                if (!isNaN(size) && size >= 10 && size <= 80) {
+                    drawScale = 2 + (size - 10) * (14 - 2) / (80 - 10);
+                    drawScale = Math.round(drawScale * 10) / 10;
+                }
+            }
+
+            // Use the actual rendered width from canvas or calculate based on drawScale
+            var visualWidth = width > 0 ? width : drawScale * 50;
+
+            // If no rotation, use simple hit test with visual dimensions
+            if (this.angle === 0) {
+                return (coords.x >= parseInt(this.x) &&
+                    coords.x <= parseInt(this.x) + parseInt(visualWidth) &&
+                    coords.y >= parseInt(this.y) &&
+                    coords.y <= parseInt(this.y) + parseInt(visualWidth));
+            }
+
+            // For rotated datamatrix, transform the coordinates
+            var centerX = this.x + visualWidth / 2;
+            var centerY = this.y + visualWidth / 2;
+
+            // Translate to origin
+            var translatedX = coords.x - centerX;
+            var translatedY = coords.y - centerY;
+
+            // Rotate in the opposite direction
+            var angleRad = -this.angle * Math.PI / 180;
+            var rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+            var rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+            // Check if the rotated point is within the bounds
+            var halfWidth = visualWidth / 2;
+
+            return (rotatedX >= -halfWidth && rotatedX <= halfWidth &&
+                rotatedY >= -halfWidth && rotatedY <= halfWidth);
         }
     }
 };
