@@ -487,7 +487,7 @@ com.logicpartners.labelDesigner = function (canvasid, labelWidth, labelHeight) {
 
 		for (var i = 0; i < this.currentLayer; i++) {
 			if (this.elements[i]) {
-				bufferData += this.elements[i].getZPLData();
+				// bufferData += this.elements[i].getZPLData();
 				data += this.elements[i].toZPL(this.labelX, this.labelY, this.labelHeight, this.labelWidth);
 			}
 		}
