@@ -476,19 +476,18 @@ com.logicpartners.labelDesigner = function (canvasid, labelWidth, labelHeight) {
 	this.generateZPL = function () {
 		var data = "^XA\r\n" +
 			"^CI28\r\n" +
-			"^CFN,50\r\n" +
 			"^PR12\r\n" +
 			"^LRY\r\n" +
 			"^MD30\r\n" +
-			"^PW" + this.labelWidth + "\r\n" +
-			"^LL" + this.labelHeight + "\r\n" +
+			// "^PW" + this.labelWidth + "\r\n" +
+			// "^LL" + this.labelHeight + "\r\n" +
 			"^PON\r\n";
 
 		var bufferData = "";
 
 		for (var i = 0; i < this.currentLayer; i++) {
 			if (this.elements[i]) {
-				bufferData += this.elements[i].getZPLData();
+				// bufferData += this.elements[i].getZPLData();
 				data += this.elements[i].toZPL(this.labelX, this.labelY, this.labelHeight, this.labelWidth);
 			}
 		}
